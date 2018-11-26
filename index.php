@@ -1,3 +1,35 @@
+<?php
+require_once("funcions.php");
+$mysqli = conecta();
+$buscador = "";
+if(isset($_POST['buscador'])){
+    $buscador = $mysqli->real_escape_string($_POST['buscador']);
+}
+$orderBy = 'descripcio_cat asc';
+$orden = "";
+if (isset($_POST['orden'])){
+$orden = $_POST['orden'];
+    switch ($orden){
+        case "nombre_ascendente":
+            $orderBy = 'descripcio_cat asc';
+            break;
+        case "nombre_descendente":
+            $orderBy = 'descripcio_cat desc';
+            break;
+    }
+}
+$numResultados = 1;
+if (isset($_POST['numResultados'])){
+    $numResultados = $_POST['numResultados'];
+    $sql = "select count(*) as totalResultados FROM allotjament WHERE descripcio_cat LIKE '%$buscador%' or descripcio_esp LIKE '%$buscador%' or descripcio_eng LIKE 
+      '%$buscador%'";
+    $resultadoTotal = $mysqli->query($sql) or die($sql);
+    if ($row = $resultadoTotal->fetch_assoc()){
+        $total = $row['totalResultados'];
+        $totalPorPagina = ceil($total/$numResultados);
+    }
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -45,9 +77,19 @@
             <a class="nav-link" href="#">Nav 2</a>
         </li>
         <li class="nav-item">
-            <form class="form-inline align-content-right">
-                <input type="text" id="buscador" name="buscador">
+            <form class="form-inline" action="" method="post">
+                <input type="text" id="buscador" name="buscador" value="<?=$buscador?>">
                 <button type="button" name="bBuscador" class="btn btn-primary">Buscar</button>
+                <select name="orden" id="orden" onchange="this.form.submit()">
+                    <option value="nombre_ascendente" <?php echo($orden == 'nombre_ascendente'?'selected':'');?>>nombre ascendente</option>
+                    <option value="nombre_descendente" <?php echo($orden == "nombre_descendente"?"selected":"");?>>nombre descendente</option>
+
+                </select>
+                <select name="numResultados" id="numResultado" onchange="this.form.submit()">
+                    <option value="1" <?php echo($numResultados == 1?'selected':'');?>>1</option>
+                    <option value="2" <?php echo($numResultados == 2?'selected':'');?>>2</option>
+                    <option value="3" <?php echo($numResultados == 3?'selected':'');?>>3</option>
+                </select>
             </form>
         </li>
         <li class="nav-item">
@@ -59,17 +101,39 @@
     
 </div>
 
-<div id="destacados" class="form-check">
-<label class="form-check-label">
-    <input type="checkbox" class="form-check-input" name="" id="" value="checkedValue" checked>
-    Display value
-</label>
-</div>">
+<div id="destacados">
 
 </div>
 <div id="generar">
+    <table
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Descripcio en catala</th>
+            <th>Descripcion en castellano</th>
+            <th>English description</th>
+        </tr>
+        </thead>
+        <tbody>
+<?php
+$sql = "SELECT * FROM allotjament WHERE descripcio_cat LIKE '%$buscador%' or descripcio_esp LIKE '%$buscador%' or descripcio_eng LIKE 
+      '%$buscador%' order by $orderBy limit 0,$numResultados";
+$resultado  = $mysqli->query($sql) or die($sql);
+while($row = $resultado->fetch_assoc()) {
+    echo "<tr>
+            <td>".$row["descripcio_cat"]."</td>
+            <td>".$row["descripcio_esp"]."</td>
+            <td>".$row["descripcio_eng"]."</td>
+            </tr>";
+}
 
+ ?></tbody>
+    </table>
 </div>
+<div>
+    <form id="">
 
+    </form>
+</div>
 </body>
 </html>
